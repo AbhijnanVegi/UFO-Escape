@@ -7,9 +7,9 @@
             "label": "Run",
             "type": "shell",
             "options": {
-                "cwd": "${workspaceFolder}/build"
+                "cwd": "${workspaceFolder}"
             },
-            "command": "./game",
+            "command": "prime-run build/game",
             // "args" : ["${input:num}"],
             "problemMatcher": [],
             "presentation": {

@@ -9,8 +9,8 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-const unsigned int SCREEN_WIDTH = 800;
-const unsigned int SCREEN_HEIGHT = 600;
+const unsigned int SCREEN_WIDTH = 900;
+const unsigned int SCREEN_HEIGHT = 720;
 
 Game Escape(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -81,7 +81,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if (action == GLFW_PRESS)
             Escape.Keys[key] = true;
         else if (action == GLFW_RELEASE)
+        {
             Escape.Keys[key] = false;
+        }
     }
 }
 
