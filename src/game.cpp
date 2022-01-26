@@ -1,23 +1,26 @@
+#include <stdio.h>
+
 #include "game.h"
 #include "resource_manager.h"
 #include "sprite_renderer.h"
 #include "game_object.h"
 #include "game_level.h"
 
+#include "gltext.h"
+
 bool CheckCollision(GameObject &one, GameObject &two);
 void handlePlayerWallCollisions(UFO &player, std::vector<GameObject> &Walls);
-void handlePlayerCoinCollision(UFO &player, std::vector<GameObject> &Coins);
+void handlePlayerCoinCollision(UFO &player, std::vector<GameObject> &Coins, unsigned int &score);
 void handleEnemyWallCollisions(Enemy &enemy, std::vector<GameObject> &Walls);
 void handleEnemyEnemyCollisions(std::vector<Enemy> &Enemies);
 
 SpriteRenderer *Renderer;
 
-UFO        *Player;
+UFO *Player;
 
-Game::Game(unsigned int width, unsigned int height) 
+Game::Game(unsigned int width, unsigned int height)
     : State(GAME_ACTIVE), Keys(), Width(width), Height(height)
-{ 
-
+{
 }
 
 Game::~Game()
@@ -27,34 +30,44 @@ Game::~Game()
 
 void Game::Init()
 {
-   ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.frag", nullptr, "sprite");
-   glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width),
-                                     static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
-   ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
-   ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
+    ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.frag", nullptr, "sprite");
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width),
+                                      static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
+    ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
+    ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
 
-   Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
+    Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
 
-   ResourceManager::LoadTexture("textures/ufo.png", true, "ufo");
-   ResourceManager::LoadTexture("textures/meteor.png", true, "meteor");
-   ResourceManager::LoadTexture("textures/enemy.png", true, "enemy");
-   ResourceManager::LoadTexture("textures/coin.png", true, "coin");
-   ResourceManager::LoadTexture("textures/wall.png", true, "wall");
+    ResourceManager::LoadTexture("textures/ufo.png", true, "ufo");
+    ResourceManager::LoadTexture("textures/meteor.png", true, "meteor");
+    ResourceManager::LoadTexture("textures/enemy.png", true, "enemy");
+    ResourceManager::LoadTexture("textures/coin.png", true, "coin");
+    ResourceManager::LoadTexture("textures/wall.png", true, "wall");
 
-   GameLevel one;
-   one.GenerateLevel(20,5,10,30,24,this->Width,this->Height);
-   this->Levels.push_back(one);
+    GameLevel one;
+    one.GenerateLevel(20, 5, 10, 30, 24, this->Width, this->Height);
+    this->Levels.push_back(one);
 
-   Player = new UFO(glm::vec2(40.0f, 40.0f), glm::vec2(29.0f, 29.0f), ResourceManager::GetTexture("ufo"), glm::vec3(1.0f,1.0f,1.0f), glm::vec2(200.0f, 200.0f));
+    Player = new UFO(glm::vec2(40.0f, 40.0f), glm::vec2(29.0f, 29.0f), ResourceManager::GetTexture("ufo"), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(200.0f, 200.0f));
+
+     if (!gltInit())
+	{
+		fprintf(stderr, "Failed to initialize glText\n");
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
+
+    this->Text = gltCreateText();
+    gltSetText(this->Text, "Score: 0");
 }
 
 void Game::Update(float dt)
 {
     handlePlayerWallCollisions(*Player, this->Levels[0].Walls);
-    handlePlayerCoinCollision(*Player, this->Levels[0].Coins);
+    handlePlayerCoinCollision(*Player, this->Levels[0].Coins, this->Score);
     for (Enemy &enemy : this->Levels[0].Enemies)
     {
-        enemy.Move(Player->Position,dt);
+        enemy.Move(Player->Position, dt);
         if (CheckCollision(*Player, enemy))
         {
             if (!enemy.Destroyed)
@@ -62,7 +75,12 @@ void Game::Update(float dt)
         }
         handleEnemyWallCollisions(enemy, this->Levels[0].Walls);
     }
-    // handleEnemyEnemyCollisions(this->Levels[0].Enemies);
+    handleEnemyEnemyCollisions(this->Levels[0].Enemies);
+
+    // Handle score updates
+    char scoreStr[20];
+    sprintf(scoreStr, "Score: %d", this->Score);
+    gltSetText(this->Text, scoreStr);
 }
 
 void Game::ProcessInput(float dt)
@@ -74,23 +92,30 @@ void Game::Render()
 {
     Levels[0].Draw(*Renderer);
     Player->Draw(*Renderer);
+
+    gltBeginDraw();
+
+    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+    gltDrawText2D(this->Text, 0.0f, 0.0f, 1.0f);
+
+    gltEndDraw();
 }
 
 bool CheckCollision(GameObject &one, GameObject &two) // AABB - AABB collision
 {
     // collision x-axis?
     bool collisionX = one.Position.x + one.Size.x >= two.Position.x &&
-        two.Position.x + two.Size.x >= one.Position.x;
+                      two.Position.x + two.Size.x >= one.Position.x;
     // collision y-axis?
     bool collisionY = one.Position.y + one.Size.y >= two.Position.y &&
-        two.Position.y + two.Size.y >= one.Position.y;
+                      two.Position.y + two.Size.y >= one.Position.y;
     // collision only if on both axes
     return collisionX && collisionY;
 }
 
 void handlePlayerWallCollisions(UFO &player, std::vector<GameObject> &Walls)
 {
-    for (GameObject &Wall: Walls)
+    for (GameObject &Wall : Walls)
     {
         if (CheckCollision(player, Wall))
         {
@@ -101,21 +126,22 @@ void handlePlayerWallCollisions(UFO &player, std::vector<GameObject> &Walls)
     }
 }
 
-void handlePlayerCoinCollision(UFO &player, std::vector<GameObject> &Coins)
+void handlePlayerCoinCollision(UFO &player, std::vector<GameObject> &Coins,  unsigned int &score)
 {
-    for (GameObject &Coin: Coins)
+    for (GameObject &Coin : Coins)
     {
-        if (CheckCollision(player, Coin))
+        if (CheckCollision(player, Coin) && !Coin.Destroyed)
         {
             Coin.Destroyed = true;
-            break;
+            score += 10;
         }
     }
 }
 
+
 void handleEnemyWallCollisions(Enemy &enemy, std::vector<GameObject> &Walls)
 {
-    for (GameObject &Wall: Walls)
+    for (GameObject &Wall : Walls)
     {
         if (CheckCollision(enemy, Wall))
         {

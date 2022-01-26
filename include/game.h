@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define GLT_IMPLEMENTATION
+#include "gltext.h"
 #include "game_level.h"
 
 enum GameState {
@@ -20,7 +22,9 @@ public:
     GameState               State;	
     bool                    Keys[1024];
     unsigned int            Width, Height;
+    unsigned int            Score;
     std::vector<GameLevel>       Levels;
+    GLTtext*                Text;
     
     Game(unsigned int width, unsigned int height);
     ~Game();
