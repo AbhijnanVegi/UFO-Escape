@@ -50,6 +50,7 @@ void Game::Init()
     ResourceManager::LoadTexture("textures/enemy.png", true, "enemy");
     ResourceManager::LoadTexture("textures/coin.png", true, "coin");
     ResourceManager::LoadTexture("textures/wall.png", true, "wall");
+    ResourceManager::LoadTexture("textures/bg.png", false, "background");
 
     GameLevel one;
     one.GenerateLevel(20, 3, 10, 30, 24, this->Width, this->Height);
@@ -102,8 +103,9 @@ void Game::ProcessInput(float dt)
 
 void Game::Render()
 {
+    Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
     Levels[0].Draw(*Renderer);
-    Player->Draw(*UFORenderer);
+    Player->Draw(*UFORenderer); 
 
     gltBeginDraw();
 
