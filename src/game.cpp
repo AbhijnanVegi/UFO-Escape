@@ -20,7 +20,7 @@ SpriteRenderer *UFORenderer;
 UFO *Player;
 
 Game::Game(unsigned int width, unsigned int height)
-    : State(GAME_ACTIVE), Keys(), Width(width), Height(height), Lights(1)
+    : State(GAME_MENU), Keys(), Width(width), Height(height), Lights(1), Level(0)
 {
 }
 
@@ -38,6 +38,7 @@ void Game::Init()
                                       static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
     ResourceManager::GetShader("sprite").Use().SetInteger("image", 0);
     ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
+    ResourceManager::GetShader("sprite").Use().SetInteger("Lights", this->Lights);
 
     ResourceManager::GetShader("ufo").Use().SetInteger("image", 0);
     ResourceManager::GetShader("ufo").SetMatrix4("projection", projection);
@@ -52,11 +53,15 @@ void Game::Init()
     ResourceManager::LoadTexture("textures/wall.png", true, "wall");
     ResourceManager::LoadTexture("textures/bg.png", false, "background");
 
-    GameLevel one;
-    one.GenerateLevel(20, 3, 10, 30, 24, this->Width, this->Height);
+    GameLevel one, two, three;
+    one.GenerateLevel(25, 3, 5, 30, 24, this->Width, this->Height, false);
+    two.GenerateLevel(20, 3, 10, 30, 24, this->Width, this->Height, true);
+    three.GenerateLevel(15, 3, 10, 30, 24, this->Width, this->Height, true);
     this->Levels.push_back(one);
+    this->Levels.push_back(two);
+    this->Levels.push_back(three);
 
-    Player = new UFO(glm::vec2(40.0f, 40.0f), glm::vec2(29.0f, 29.0f), ResourceManager::GetTexture("ufo"), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(200.0f, 200.0f));
+    Player = new UFO(glm::vec2(35.0f, 35.0f), glm::vec2(25.0f, 25.0f), ResourceManager::GetTexture("ufo"), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(200.0f, 200.0f));
 
     if (!gltInit())
     {
@@ -71,48 +76,121 @@ void Game::Init()
 
 void Game::Update(float dt)
 {
-    handlePlayerWallCollisions(*Player, this->Levels[0].Walls);
-    handlePlayerCoinCollision(*Player, this->Levels[0].Coins, this->Score);
-    for (Enemy &enemy : this->Levels[0].Enemies)
+    if (this->State == GAME_ACTIVE)
     {
-        enemy.Move(Player->Position, dt);
-        if (CheckCollision(*Player, enemy))
+        handlePlayerWallCollisions(*Player, this->Levels[Level].Walls);
+        handlePlayerCoinCollision(*Player, this->Levels[Level].Coins, this->Score);
+        for (Enemy &enemy : this->Levels[Level].Enemies)
         {
-            if (!enemy.Destroyed)
-                Player->Destroyed = true;
+            enemy.Move(Player->Position, dt);
+            if (CheckCollision(*Player, enemy))
+            {
+                if (!enemy.Destroyed)
+                {
+                    Player->Destroyed = true;
+                    this->State = GAME_OVER;
+                }
+            }
+            handleEnemyWallCollisions(enemy, this->Levels[Level].Walls);
         }
-        handleEnemyWallCollisions(enemy, this->Levels[0].Walls);
+        handleEnemyEnemyCollisions(this->Levels[Level].Enemies);
+
+        // Handle score updates
+        char scoreStr[20];
+        sprintf(scoreStr, "Score: %d", this->Score);
+        gltSetText(this->Text, scoreStr);
+
+        if (Player->Position.x > this->Width)
+        {
+            Player->Position.x = 0.0f;
+            Player->Position.y = 32.0f;
+            if (Level < 2)
+                Level++;
+            else if ( Level == 2)
+                this->State = GAME_WIN;
+        }
+        else if (Player->Position.x < 0.0f)
+        {
+            Player->Position.x = this->Width - 35.0f;
+            Player->Position.y = this->Height - 56.0f;
+            if (Level > 0)
+                Level--;
+        }
+
+        // Handle lighting
+        glm::vec3 lightPos = glm::vec3(Player->Position.x, Player->Position.y, 1.0f);
+        ResourceManager::GetShader("sprite").Use().SetVector3f("LightPos", lightPos);
+        ResourceManager::GetShader("sprite").Use().SetInteger("Lights", this->Lights);
     }
-    handleEnemyEnemyCollisions(this->Levels[0].Enemies);
-
-    // Handle score updates
-    char scoreStr[20];
-    sprintf(scoreStr, "Score: %d", this->Score);
-    gltSetText(this->Text, scoreStr);
-
-    // Handle lighting
-    glm::vec3 lightPos = glm::vec3(Player->Position.x, Player->Position.y, 1.0f);
-    ResourceManager::GetShader("sprite").Use().SetVector3f("LightPos", lightPos);
-    ResourceManager::GetShader("sprite").Use().SetInteger("Lights", this->Lights);
 }
 
 void Game::ProcessInput(float dt)
 {
-    Player->ProcessInput(Keys, dt);
+    if (this->State == GAME_ACTIVE)
+        Player->ProcessInput(Keys, dt);
 }
 
 void Game::Render()
 {
-    Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
-    Levels[0].Draw(*Renderer);
-    Player->Draw(*UFORenderer); 
+    if (this->State == GAME_ACTIVE)
+    {
+        Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
+        Levels[Level].Draw(*Renderer);
+        Player->Draw(*UFORenderer);
 
-    gltBeginDraw();
+        gltBeginDraw();
 
-    gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-    gltDrawText2D(this->Text, 0.0f, 0.0f, 1.0f);
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2D(this->Text, 0.0f, 0.0f, 1.0f);
 
-    gltEndDraw();
+        gltEndDraw();
+    }
+    if (this->State == GAME_MENU)
+    {
+        Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
+        gltBeginDraw();
+
+        GLTtext* text = gltCreateText();
+        gltSetText(text, "Press Enter to start");
+
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2D(text, 200.0f, 300.0f, 3.0f);
+
+        gltEndDraw();
+    }
+    if (this->State == GAME_OVER)
+    {
+        Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
+        gltBeginDraw();
+
+        GLTtext* text = gltCreateText();
+        GLTtext* text2 = gltCreateText();
+        gltSetText(text, "Game Over");
+        gltSetText(text2, "Press Enter to exit");
+
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2D(text, 350.0f, 300.0f, 3.0f);
+        gltDrawText2D(text2, 350.0f, 350.0f, 1.0f);
+
+        gltEndDraw();
+    }
+    if (this->State == GAME_WIN)
+    {
+        Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
+        gltBeginDraw();
+
+        GLTtext* text = gltCreateText();
+        GLTtext* text2 = gltCreateText();
+        gltSetText(text, "You win!");
+        gltSetText(text2, "Press Enter to exit");
+
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2D(text, 350.0f, 300.0f, 3.0f);
+        gltDrawText2D(this->Text, 350.0f, 350.0f, 2.0f);
+        gltDrawText2D(text2, 350.0f, 400.0f, 1.0f);
+
+        gltEndDraw();
+    }
 }
 
 bool CheckCollision(GameObject &one, GameObject &two) // AABB - AABB collision

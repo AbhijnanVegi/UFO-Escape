@@ -23,11 +23,12 @@ public:
     // render level
     void Draw(SpriteRenderer &renderer);
     // Generates a level
-    void GenerateLevel(unsigned int walls, unsigned int enemies, unsigned int coins, unsigned int columns, unsigned int rows, unsigned int levelWidth, unsigned int levelHeight);
+    void GenerateLevel(unsigned int walls, unsigned int enemies, unsigned int coins, unsigned int columns, unsigned int rows, unsigned int levelWidth, unsigned int levelHeight, bool hasEntry);
 
 private:
     // initialize level from tile data
     void init(std::vector<std::vector<unsigned int>> tileData, unsigned int levelWidth, unsigned int levelHeight);
+    bool isGood(std::vector<std::vector<unsigned int>> tileData, int Walls);
 };
 
 #endif

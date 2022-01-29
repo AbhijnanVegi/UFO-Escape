@@ -13,7 +13,8 @@
 enum GameState {
     GAME_ACTIVE,
     GAME_MENU,
-    GAME_WIN
+    GAME_WIN,
+    GAME_OVER
 };
 
 class Game
@@ -26,6 +27,7 @@ public:
     std::vector<GameLevel>      Levels;
     GLTtext*                    Text;
     unsigned int                Lights;
+    unsigned int                Level;
     
     Game(unsigned int width, unsigned int height);
     ~Game();

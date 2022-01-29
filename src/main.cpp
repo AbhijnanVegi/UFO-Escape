@@ -78,7 +78,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     if ( key == GLFW_KEY_E && action  == GLFW_PRESS)
     {
-        Escape.Lights = !Escape.Lights;
+        if (Escape.State == GAME_ACTIVE)
+            Escape.Lights = !Escape.Lights;
+    }
+
+    if ( key == GLFW_KEY_ENTER && action == GLFW_PRESS )
+    {
+        if (Escape.State == GAME_MENU)
+            Escape.State = GAME_ACTIVE;
+        else if (Escape.State == GAME_WIN || Escape.State == GAME_OVER)
+            glfwSetWindowShouldClose(window, true);
     }
 
     if (key >= 0 && key < 1024)
