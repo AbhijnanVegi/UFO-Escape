@@ -19,12 +19,13 @@ enum GameState {
 class Game
 {
 public:
-    GameState               State;	
-    bool                    Keys[1024];
-    unsigned int            Width, Height;
-    unsigned int            Score;
-    std::vector<GameLevel>       Levels;
-    GLTtext*                Text;
+    GameState                   State;	
+    bool                        Keys[1024];
+    unsigned int                Width, Height;
+    unsigned int                Score;
+    std::vector<GameLevel>      Levels;
+    GLTtext*                    Text;
+    unsigned int                Lights;
     
     Game(unsigned int width, unsigned int height);
     ~Game();
