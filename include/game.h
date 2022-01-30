@@ -25,7 +25,8 @@ public:
     std::vector<GameLevel>      Levels;
     unsigned int                Lights;
     unsigned int                Level;
-    
+    float                       TimeInLight;
+
     Game(unsigned int width, unsigned int height);
     ~Game();
 

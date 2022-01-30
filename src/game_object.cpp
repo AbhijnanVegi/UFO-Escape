@@ -27,22 +27,22 @@ void UFO::ProcessInput(bool Keys[], float dt)
     deltaY = 0.0f;
     float velocityX = this->Velocity.x * dt;
     float velocityY = this->Velocity.y * dt;
-    if (Keys[GLFW_KEY_LEFT])
+    if (Keys[GLFW_KEY_LEFT] || Keys[GLFW_KEY_A])
     {
         this->Position.x -= velocityX;
         deltaX -= velocityX;
     }
-    if (Keys[GLFW_KEY_RIGHT])
+    if (Keys[GLFW_KEY_RIGHT] || Keys[GLFW_KEY_D])
     {
         this->Position.x += velocityX;
         deltaX += velocityX;
     }
-    if (Keys[GLFW_KEY_UP])
+    if (Keys[GLFW_KEY_UP] || Keys[GLFW_KEY_W])
     {
         this->Position.y -= velocityY;
         deltaY -= velocityY;
     }
-    if (Keys[GLFW_KEY_DOWN])
+    if (Keys[GLFW_KEY_DOWN] || Keys[GLFW_KEY_S])
     {
         this->Position.y += velocityY;
         deltaY += velocityY;
