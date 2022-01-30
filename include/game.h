@@ -26,6 +26,7 @@ public:
     unsigned int                Lights;
     unsigned int                Level;
     float                       TimeInLight;
+    float                       TimePlayed;
 
     Game(unsigned int width, unsigned int height);
     ~Game();

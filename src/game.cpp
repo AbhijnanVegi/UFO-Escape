@@ -22,7 +22,7 @@ TextRenderer *Text;
 UFO *Player;
 
 Game::Game(unsigned int width, unsigned int height)
-    : State(GAME_MENU), Keys(), Width(width), Height(height), Lights(1), Level(0), TimeInLight(0.0f)
+    : State(GAME_MENU), Keys(), Width(width), Height(height), Lights(1), Level(0), TimeInLight(0.0f), TimePlayed(0.0f)
 {
 }
 
@@ -94,6 +94,8 @@ void Game::Update(float dt)
         char scoreStr[20];
         sprintf(scoreStr, "Score: %d", this->Score);
 
+
+        this->TimePlayed += dt;
         if (this->Lights)
             this->TimeInLight += dt;
 
@@ -151,8 +153,8 @@ void Game::Render()
         Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
 
         Text->RenderText("Game Over", this->Width / 2.0f - 125.0f, this->Height / 2.0f - 50.0f, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-        Text->RenderText("Press Enter to exit", this->Width / 2 - 125, this->Height / 2, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
-
+        Text->RenderText("Time Played: " + std::to_string(this->TimePlayed), this->Width / 2 - 125, this->Height / 2, 1.0f, glm::vec3(1.0f, 0.0f, 1.0f));
+        Text->RenderText("Press Enter to exit", this->Width / 2 - 125, this->Height / 2 + 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
     }
     if (this->State == GAME_WIN)
     {
@@ -160,8 +162,8 @@ void Game::Render()
 
         Text->RenderText("You Win", this->Width / 2.0f - 125.0f, this->Height / 2.0f - 50.0f, 2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
         Text->RenderText("Score: "+ std::to_string(this->Score -(int) (3*this->TimeInLight)), this->Width / 2 - 125, this->Height / 2, 1.0f, glm::vec3(1.0f, 0.0f, 1.0f));
-
-        Text->RenderText("Press Enter to exit", this->Width / 2 - 125, this->Height / 2 + 50, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+        Text->RenderText("Time Played: " + std::to_string(this->TimePlayed), this->Width / 2 - 125, this->Height / 2 + 50, 1.0f, glm::vec3(1.0f, 0.0f, 1.0f));
+        Text->RenderText("Press Enter to exit", this->Width / 2 - 125, this->Height / 2 + 100, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
     }
 }

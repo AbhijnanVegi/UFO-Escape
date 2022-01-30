@@ -5,6 +5,7 @@
 #include "resource_manager.h"
 
 #include <iostream>
+#include <unistd.h>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
+    float killTime = 5.0f;
 
     while(!glfwWindowShouldClose(window))
     {
@@ -60,9 +62,19 @@ int main(int argc, char *argv[])
 
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        Escape.Render();
 
+        Escape.Render();
         glfwSwapBuffers(window);
+
+        if (Escape.State == GAME_WIN || Escape.State == GAME_OVER)
+        {
+            killTime -= deltaTime;
+            if (killTime <= 0.0f)
+            {
+                glfwSetWindowShouldClose(window, true);
+            }
+        }
+
     }
 
     ResourceManager::Clear();
