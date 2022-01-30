@@ -1,7 +1,7 @@
 # UFO-Escape
-Sus, the Alien was sent for mining to an astroid field in the far reaches of the galaxy.
-Unfortumately for him the astroid field was already taken over by hostile aliens. Help
-Sus escape from the astroid field and collect coins. He doesn't like the bright lights, so
+Sussy, the Alien was sent for mining to an asteroid field in the far reaches of the galaxy.
+Unfortunately for him the asteroid field was already taken over by hostile aliens. Help
+Sussy escape from the asteroid field and collect coins. He doesn't like the bright lights, so
 make sure to turn them off while helping him navigate.
 
 ## Installation
