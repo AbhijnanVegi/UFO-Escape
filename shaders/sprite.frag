@@ -17,11 +17,13 @@ void main()
     if (Lights == 0)
     {
         float distance = length(Pos - LightPos);
-        if (distance < 100)
+        if (distance < 1000)
         {
-            color = vec4(vec3(1.0f)*(1/distance)*(1/distance)*vec3(color) * 1000,color.w);
+            // color = vec4(vec3(1.0f)*(1/distance)*(1/distance)*vec3(color) * 1000,color.w);
+            // color = vec4(vec3(1.0f)*(1/distance)*vec3(color) * 20,color.w);
+            color = vec4(vec3(1.0f)*(1/(1000+ (distance * distance)))*vec3(color) * 2000,color.w);
             // float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * distance * distance);
-            // color = vec4(attenuation * vec3(color) * 10,color.w);
+            // color = vec4(attenuation * vec3(color) * 100,color.w);
             
         }
         else

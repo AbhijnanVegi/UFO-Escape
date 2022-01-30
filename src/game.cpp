@@ -1,12 +1,12 @@
-#include <stdio.h>
+#include <iostream>
+#include <string>
 
 #include "game.h"
 #include "resource_manager.h"
 #include "sprite_renderer.h"
 #include "game_object.h"
 #include "game_level.h"
-
-#include "gltext.h"
+#include "text_renderer.h"
 
 bool CheckCollision(GameObject &one, GameObject &two);
 void handlePlayerWallCollisions(UFO &player, std::vector<GameObject> &Walls);
@@ -16,6 +16,8 @@ void handleEnemyEnemyCollisions(std::vector<Enemy> &Enemies);
 
 SpriteRenderer *Renderer;
 SpriteRenderer *UFORenderer;
+
+TextRenderer *Text;
 
 UFO *Player;
 
@@ -63,15 +65,8 @@ void Game::Init()
 
     Player = new UFO(glm::vec2(35.0f, 35.0f), glm::vec2(25.0f, 25.0f), ResourceManager::GetTexture("ufo"), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec2(200.0f, 200.0f));
 
-    if (!gltInit())
-    {
-        fprintf(stderr, "Failed to initialize glText\n");
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-
-    this->Text = gltCreateText();
-    gltSetText(this->Text, "Score: 0");
+    Text = new TextRenderer(this->Width, this->Height);
+    Text->Load("fonts/ocratext.ttf", 20);
 }
 
 void Game::Update(float dt)
@@ -98,7 +93,6 @@ void Game::Update(float dt)
         // Handle score updates
         char scoreStr[20];
         sprintf(scoreStr, "Score: %d", this->Score);
-        gltSetText(this->Text, scoreStr);
 
         if (Player->Position.x > this->Width)
         {
@@ -118,7 +112,7 @@ void Game::Update(float dt)
         }
 
         // Handle lighting
-        glm::vec3 lightPos = glm::vec3(Player->Position.x, Player->Position.y, 1.0f);
+        glm::vec3 lightPos = glm::vec3(Player->Position.x, Player->Position.y, 0.0f);
         ResourceManager::GetShader("sprite").Use().SetVector3f("LightPos", lightPos);
         ResourceManager::GetShader("sprite").Use().SetInteger("Lights", this->Lights);
     }
@@ -138,58 +132,34 @@ void Game::Render()
         Levels[Level].Draw(*Renderer);
         Player->Draw(*UFORenderer);
 
-        gltBeginDraw();
+        // Draw score
+        Text->RenderText("Score: " + std::to_string(this->Score), 5.0f, 5.0f, 1.1f, glm::vec3(0.0f, 1.0f, 1.0f));
 
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gltDrawText2D(this->Text, 0.0f, 0.0f, 1.0f);
-
-        gltEndDraw();
     }
     if (this->State == GAME_MENU)
     {
         Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
-        gltBeginDraw();
 
-        GLTtext* text = gltCreateText();
-        gltSetText(text, "Press Enter to start");
-
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gltDrawText2D(text, 200.0f, 300.0f, 3.0f);
-
-        gltEndDraw();
+        Text->RenderText("UFO Escape", this->Width / 2.0f - 125.0f, this->Height / 2.0f - 50.0f, 2.0f, glm::vec3(0.0f, 1.0f, 1.0f));
+        Text->RenderText("Press Enter to start", this->Width / 2 - 125, this->Height / 2, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
     }
     if (this->State == GAME_OVER)
     {
         Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
-        gltBeginDraw();
 
-        GLTtext* text = gltCreateText();
-        GLTtext* text2 = gltCreateText();
-        gltSetText(text, "Game Over");
-        gltSetText(text2, "Press Enter to exit");
+        Text->RenderText("Game Over", this->Width / 2.0f - 125.0f, this->Height / 2.0f - 50.0f, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+        Text->RenderText("Press Enter to exit", this->Width / 2 - 125, this->Height / 2, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gltDrawText2D(text, 350.0f, 300.0f, 3.0f);
-        gltDrawText2D(text2, 350.0f, 350.0f, 1.0f);
-
-        gltEndDraw();
     }
     if (this->State == GAME_WIN)
     {
         Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f, glm::vec3(1.0f));
-        gltBeginDraw();
 
-        GLTtext* text = gltCreateText();
-        GLTtext* text2 = gltCreateText();
-        gltSetText(text, "You win!");
-        gltSetText(text2, "Press Enter to exit");
+        Text->RenderText("You Win", this->Width / 2.0f - 125.0f, this->Height / 2.0f - 50.0f, 2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        Text->RenderText("Score: "+ std::to_string(this->Score), this->Width / 2 - 125, this->Height / 2, 1.0f, glm::vec3(1.0f, 0.0f, 1.0f));
 
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gltDrawText2D(text, 350.0f, 300.0f, 3.0f);
-        gltDrawText2D(this->Text, 350.0f, 350.0f, 2.0f);
-        gltDrawText2D(text2, 350.0f, 400.0f, 1.0f);
+        Text->RenderText("Press Enter to exit", this->Width / 2 - 125, this->Height / 2 + 50, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
-        gltEndDraw();
     }
 }
 
