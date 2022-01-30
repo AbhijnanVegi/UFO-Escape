@@ -139,7 +139,7 @@ void GameLevel::init(std::vector<std::vector<unsigned int>> tileData, unsigned i
                           glm::vec2(unitWidth, unitHeight),
                           ResourceManager::GetTexture("enemy"),
                           glm::vec3(1.0f, 0.0f, 0.0f),
-                          glm::vec2(100.0f, 100.0f));
+                          glm::vec2(50.0f, 50.0f));
                 this->Enemies.push_back(obj);
             }
         }
